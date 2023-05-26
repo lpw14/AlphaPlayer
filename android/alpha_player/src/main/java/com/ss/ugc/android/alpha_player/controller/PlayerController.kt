@@ -1,16 +1,16 @@
 package com.ss.ugc.android.alpha_player.controller
 
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleObserver
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
 import android.content.Context
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.Message
 import android.os.Process
-import android.support.annotation.WorkerThread
+import androidx.annotation.WorkerThread
 import android.text.TextUtils
 import android.util.Log
 import android.view.Surface
@@ -322,6 +322,7 @@ class PlayerController(val context: Context, owner: LifecycleOwner, val alphaVid
                     emitEndSignal()
                 }
             }
+            else -> {}
         }
     }
 
@@ -336,81 +337,79 @@ class PlayerController(val context: Context, owner: LifecycleOwner, val alphaVid
         }
     }
 
-    override fun handleMessage(msg: Message?): Boolean {
-        msg?.let {
-            when(msg.what) {
-                INIT_MEDIA_PLAYER -> {
-                    initPlayer()
+    override fun handleMessage(msg: Message): Boolean {
+        when(msg.what) {
+            INIT_MEDIA_PLAYER -> {
+                initPlayer()
+            }
+            SURFACE_PREPARED -> {
+                val surface = msg.obj as Surface
+                mediaPlayer.setSurface(surface)
+                handleSuspendedEvent()
+            }
+            SET_DATA_SOURCE -> {
+                val dataSource = msg.obj as DataSource
+                setDataSource(dataSource)
+            }
+            START -> {
+                try {
+                    parseVideoSize()
+                    playerState = PlayerState.PREPARED
+                    startPlay()
+                } catch (e: Exception) {
+                    monitor(false, errorInfo = "start video failure: " + Log.getStackTraceString(e))
+                    emitEndSignal()
                 }
-                SURFACE_PREPARED -> {
-                    val surface = msg.obj as Surface
-                    mediaPlayer.setSurface(surface)
-                    handleSuspendedEvent()
-                }
-                SET_DATA_SOURCE -> {
-                    val dataSource = msg.obj as DataSource
-                    setDataSource(dataSource)
-                }
-                START -> {
-                    try {
-                        parseVideoSize()
-                        playerState = PlayerState.PREPARED
-                        startPlay()
-                    } catch (e: Exception) {
-                        monitor(false, errorInfo = "start video failure: " + Log.getStackTraceString(e))
-                        emitEndSignal()
-                    }
-                }
-                PAUSE -> {
-                    when (playerState) {
-                        PlayerState.STARTED -> {
-                            mediaPlayer.pause()
-                            playerState = PlayerState.PAUSED
-                        }
-                        else -> {}
-                    }
-                }
-                RESUME -> {
-                    if (isPlaying) {
-                        startPlay()
-                    } else {
-                    }
-                }
-                STOP -> {
-                    when (playerState) {
-                        PlayerState.STARTED, PlayerState.PAUSED -> {
-                            mediaPlayer.pause()
-                            playerState = PlayerState.PAUSED
-                        }
-                        else -> {}
-                    }
-                }
-                DESTROY -> {
-                    alphaVideoView.onPause()
-                    if (playerState == PlayerState.STARTED) {
+            }
+            PAUSE -> {
+                when (playerState) {
+                    PlayerState.STARTED -> {
                         mediaPlayer.pause()
                         playerState = PlayerState.PAUSED
                     }
-                    if (playerState == PlayerState.PAUSED) {
-                        mediaPlayer.stop()
-                        playerState = PlayerState.STOPPED
-                    }
-                    mediaPlayer.release()
-                    alphaVideoView.release()
-                    playerState = PlayerState.RELEASE
-
-                    playThread?.let {
-                        it.quit()
-                        it.interrupt()
-                    }
+                    else -> {}
                 }
-                RESET -> {
-                    mediaPlayer.reset()
-                    playerState = PlayerState.NOT_PREPARED
-                    isPlaying = false
-                }
-                else -> {}
             }
+            RESUME -> {
+                if (isPlaying) {
+                    startPlay()
+                } else {
+                }
+            }
+            STOP -> {
+                when (playerState) {
+                    PlayerState.STARTED, PlayerState.PAUSED -> {
+                        mediaPlayer.pause()
+                        playerState = PlayerState.PAUSED
+                    }
+                    else -> {}
+                }
+            }
+            DESTROY -> {
+                alphaVideoView.onPause()
+                if (playerState == PlayerState.STARTED) {
+                    mediaPlayer.pause()
+                    playerState = PlayerState.PAUSED
+                }
+                if (playerState == PlayerState.PAUSED) {
+                    mediaPlayer.stop()
+                    playerState = PlayerState.STOPPED
+                }
+                mediaPlayer.release()
+                alphaVideoView.release()
+                playerState = PlayerState.RELEASE
+
+                playThread?.let {
+                    it.quit()
+                    it.interrupt()
+                }
+            }
+            RESET -> {
+                mediaPlayer.reset()
+                playerState = PlayerState.NOT_PREPARED
+                isPlaying = false
+            }
+            else -> {}
         }
         return true
     }

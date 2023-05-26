@@ -1,6 +1,6 @@
 package com.ss.ugc.android.alphavideoplayer
 
-import android.arch.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleOwner
 import android.content.Context
 import android.text.TextUtils
 import android.util.AttributeSet

@@ -1,6 +1,6 @@
 package com.ss.ugc.android.alphavideoplayer
 
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
