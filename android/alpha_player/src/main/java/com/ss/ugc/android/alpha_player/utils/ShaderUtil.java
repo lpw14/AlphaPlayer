@@ -22,16 +22,16 @@ public class ShaderUtil {
         String result = null;
         try {
             InputStream in = res.getAssets().open(assetsFileName);
-            int ch=0;
+            int len=0;
+            byte[] bytes = new byte[1024];
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            while((ch = in.read()) != -1)
+            while((len = in.read(bytes)) != -1)
             {
-                baos.write(ch);
+                baos.write(bytes, 0, len);
             }
-            byte[] buff=baos.toByteArray();
             baos.close();
             in.close();
-            result = new String(buff,"UTF-8");
+            result = baos.toString("UTF-8");
             result = result.replaceAll("\\r\\n", "\n");
         } catch(Exception e) {
             e.printStackTrace();
