@@ -247,7 +247,8 @@ class VideoRenderer(val alphaVideoView: IAlphaVideoView) : IRender {
      *
      * @return shaderID If compile shader success, it will return shader handle, else return 0.
      */
-    private fun loadShader(shaderType: Int, source: String): Int {
+    private fun loadShader(shaderType: Int, source: String?): Int {
+        if (source.isNullOrEmpty()) return 0
         var shader = GLES20.glCreateShader(shaderType)
         if (shader != 0) {
             GLES20.glShaderSource(shader, source)
